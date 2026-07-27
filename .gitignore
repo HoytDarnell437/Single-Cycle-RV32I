@@ -4,6 +4,7 @@ vivado/
 hardware/
 old/
 doc/
+.nvim/
 
 # Compiled Object files
 *.slo

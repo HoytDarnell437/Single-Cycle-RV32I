@@ -64,18 +64,14 @@ pc #() pc_inst (
 // instruction memory
 logic [31:0] instr;
 
-Gowin_ROM #() instruction_memory_inst (
-    .clk(clk),
-    .oce(1'b1),
-    .ce(1'b1),
-    .reset(rst),
-    .ad(addr[11:2]),
-    .dout(instr)
+instruction_memory #() instruction_memory_inst (
+    .addr(addr),
+    .instr(instr)
 );
+
 
 // data memory
 logic [31:0] read_data;
-logic [31:0] write_data;
 
 data_memory #() data_memory_inst (
     .clk(clk),
@@ -84,7 +80,6 @@ data_memory #() data_memory_inst (
     .sign(sign),
     .data_in(data2),
     .addr(alu_res),
-    //.unprocessed_read(unprocessed_read),
     .data_out(read_data)
 );
 
