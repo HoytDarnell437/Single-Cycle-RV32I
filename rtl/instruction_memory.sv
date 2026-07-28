@@ -13,7 +13,7 @@ assign instr = rom[addr[31:2]];
 
 // -- include machine code --
 initial begin
-    $readmemh("code.hex", rom);
+    $readmemh("instructions.hex", rom);
 end
 
 endmodule

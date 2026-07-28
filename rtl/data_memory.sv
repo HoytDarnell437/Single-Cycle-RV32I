@@ -14,6 +14,11 @@ output logic [31:0] data_out
 logic [31:0] ram [0:MEM_SIZE-1];
 logic [31:0] out_word;
 
+// -- include initial data --
+initial begin
+    $readmemh("data.hex", ram);
+end
+
 // -- combinational logic --
 always_comb begin
     data_out = 32'b0;
