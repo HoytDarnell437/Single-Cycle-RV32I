@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module processor #(
 
 )(
@@ -48,11 +50,11 @@ end
 // -- module instances -- 
 
 // clock_core
-logic clk;
+logic clk_sys;
 logic locked;
 
 clk_core clock_core (
-    .clk(clk),
+    .clk(clk_sys),
     .resetn(~rst),
     .locked(locked),
     .clk_in1(clk_100)
@@ -63,7 +65,7 @@ logic [31:0] addr;
 logic [31:0] pc_plus_4;
 
 pc #() pc_inst (
-    .clk(clk),
+    .clk(clk_sys),
     .rst_n(rst_n),
     .pc_src(pc_src),
     .imm(imm),
@@ -85,7 +87,7 @@ instruction_memory #() instruction_memory_inst (
 logic [31:0] read_data;
 
 data_memory #() data_memory_inst (
-    .clk(clk),
+    .clk(clk_sys),
     .wr_nrd(mem_rw),
     .size(addr_precision),
     .sign(sign),
@@ -99,7 +101,7 @@ logic [31:0] data1;
 logic [31:0] data2;
 
 register_file #() register_file_inst (
-    .clk(clk),
+    .clk(clk_sys),
     .rst_n(rst_n),
     .rs1(rs1),
     .rs2(rs2),

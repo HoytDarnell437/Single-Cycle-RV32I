@@ -34,6 +34,7 @@ always_comb begin
     i_shift = 1'b0;
     reg_write = 1'b1;
     wr_src = 2'b00;
+    imm_sel = 3'b000;
     mem_rw = 1'b0;
     pc_src = 2'b00;
     addr_precision = 2'b00;
