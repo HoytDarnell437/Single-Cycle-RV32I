@@ -1,13 +1,15 @@
 module processor #(
 
 )(
-input logic clk_100,
+input logic clk_100mhz,
 input logic rst,
-output logic [31:0] out_check
+output logic [2:0] out_check,
+output logic rst_n,
+input logic rx,
+output logic tx
 );
 
 // -- signal declaration --
-logic rst_n;
 logic [31:0] data1_in;
 logic [31:0] data2_in;
 logic [31:0] wr_data;
@@ -17,10 +19,10 @@ logic [1:0] pc_src;
 // -- combinational logic --
 always_comb begin
     // invert rst
-    rst_n = ~rst & locked;
+    rst_n = ~rst & pll_locked;
     
     // out check
-    out_check = alu_res;
+    out_check = alu_res[2:0];
     
     // logic 
     unique case (branch)
@@ -47,15 +49,14 @@ end
 
 // -- module instances -- 
 
-// clock_core
+//clocking wizard
 logic clk;
-logic locked;
+logic pll_locked;
 
-clk_core clock_core (
-    .clk(clk),
-    .resetn(~rst),
-    .locked(locked),
-    .clk_in1(clk_100)
+clk_wiz_0 clk_wiz_inst (
+    .clk_in1(clk_100mhz),
+    .clk_out1(clk),
+    .locked(pll_locked)
 );
 
 // program counter
@@ -79,7 +80,6 @@ instruction_memory #() instruction_memory_inst (
     .addr(addr),
     .instr(instr)
 );
-
 
 // data memory
 logic [31:0] read_data;
@@ -166,4 +166,15 @@ imm_gen #() imm_gen_inst (
     .i_shift(i_shift),
     .imm(imm)
 );
+
+// uart
+communication_top #() uart_inst (
+    .clk(clk),
+    .rst_n(rst_n),
+    .data_out1(instr),
+    .data_out2(alu_res),
+    .rx(rx),
+    .tx(tx)
+);
+
 endmodule

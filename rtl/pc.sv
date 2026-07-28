@@ -6,13 +6,13 @@ input logic rst_n,
 input logic [1:0] pc_src,
 input logic [31:0] imm,
 input logic [31:0] alu_res,
-output logic [31:0] next_addr,
+output logic [31:0] addr,
 output logic [31:0] pc_plus_4
 );
 
 // -- signal declaration --
 logic [31:0] pc_plus_imm;
-logic [31:0] addr;
+logic [31:0] next_addr;
 
 // -- combinational logic --
 always_comb begin
