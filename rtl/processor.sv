@@ -1,8 +1,6 @@
 `timescale 1ns / 1ps
 
-module processor #(
-
-)(
+module processor (
 input logic clk_100,
 input logic rst,
 output logic [31:0] out_check

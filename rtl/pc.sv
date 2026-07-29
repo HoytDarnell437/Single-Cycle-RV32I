@@ -1,6 +1,4 @@
-module pc #(
-
-)(
+module pc (
 input logic clk,
 input logic rst_n,
 input logic [1:0] pc_src,

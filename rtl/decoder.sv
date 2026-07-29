@@ -1,6 +1,4 @@
-module decoder #(
-
-)(
+module decoder (
 input logic [31:0] instr,
 input logic branch,
 output logic [4:0] rs1,

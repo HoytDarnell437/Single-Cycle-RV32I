@@ -22,12 +22,12 @@ always_comb begin
 end
 
 // -- sequential logic --
-always_ff @(posedge clk or negedge rst_n) begin
+always_ff @(posedge clk) begin
     if (!rst_n) begin
         for(int i = 0; i < REGISTER_COUNT; i = i + 1) begin
             registers[i] <= 32'b0;
         end
-    end else if (reg_write && rd) begin
+    end else if (reg_write && rd != 0) begin
         registers[rd] <= wr_data;
     end
 end

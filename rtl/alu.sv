@@ -1,6 +1,4 @@
-module alu #(
-
-)(
+module alu (
 input logic [3:0] alu_ctrl,
 input logic [31:0] data1,
 input logic [31:0] data2,
