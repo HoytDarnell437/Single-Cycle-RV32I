@@ -3,11 +3,11 @@
 module processor (
 input logic clk_100,
 input logic rst,
-output logic [31:0] out_check
+output logic out_check
 );
 
 // -- signal declaration --
-logic rst_n;
+logic invert_rst;
 logic [31:0] data1_in;
 logic [31:0] data2_in;
 logic [31:0] wr_data;
@@ -16,11 +16,11 @@ logic [1:0] pc_src;
 
 // -- combinational logic --
 always_comb begin
-    // invert rst
-    rst_n = ~rst & locked;
-    
+    // unrefined rst invert
+    invert_rst = ~rst;
+
     // out check
-    out_check = alu_res;
+    out_check = alu_res[0];
     
     // logic 
     unique case (branch)
@@ -53,9 +53,20 @@ logic locked;
 
 clk_core clock_core (
     .clk(clk_sys),
-    .resetn(~rst),
+    .resetn(invert_rst),
     .locked(locked),
     .clk_in1(clk_100)
+);
+
+// syncronous reset generator
+
+logic rst_n;
+
+sync_reset sync_reset_inst (
+    .clk(clk_sys),
+    .invert_rst(invert_rst),
+    .locked(locked),
+    .rst_n(rst_n)
 );
 
 // program counter
