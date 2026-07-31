@@ -20,6 +20,7 @@
 module processor import riscv_pkg::*; (
 input logic clk_100,
 input logic rst,
+output logic locked,
 output logic out_check // arbitrary output to stop vivado from "optimizing" away the design
 );
 
@@ -66,7 +67,6 @@ end
 
 // clock_core
 logic clk_sys;
-logic locked;
 
 clk_core clock_core (
     .clk(clk_sys),

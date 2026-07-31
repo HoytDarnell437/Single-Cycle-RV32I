@@ -17,6 +17,7 @@ module processor_tb;
     processor processor_inst (
         .clk_100(clk),
         .rst(rst),
+        .locked(locked),
         .out_check(out)
     );
 
@@ -29,8 +30,22 @@ module processor_tb;
         #50;
 
         rst = 0;
+        
+        // Wait for PLL to lock (with timeout)
+        fork : wait_for_lock
+            begin
+                @(posedge locked);
+                $display("PLL locked at %t", $time);
+            end
+            begin
+                #100000;  // 100 us timeout
+                $display("ERROR: PLL failed to lock!");
+                $finish;
+            end
+        join_any
+        disable fork;
 
-        repeat (300) @(posedge clk);
+        repeat (400) @(posedge clk);
 
         $finish;
     end
