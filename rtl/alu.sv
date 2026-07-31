@@ -1,4 +1,13 @@
-module alu (
+//------------------------------------------------------------------------------
+// alu.sv  —  ALU for RV32 processor
+//
+// Author:   Hoyt Darnell
+// Created:  2026-07-30
+//
+// Timing: Purely combinational
+//------------------------------------------------------------------------------
+
+module alu import riscv_pkg::*; (
 input logic [3:0] alu_ctrl,
 input logic [31:0] data1,
 input logic [31:0] data2,
@@ -10,59 +19,59 @@ output logic branch
 always_comb begin
     // default values
     alu_res = 32'b0;
-    branch = 1'b0;
+    branch = IGNORE_BRANCH;
     
     // case logic
     unique case (alu_ctrl)
-        4'b0000: begin // addition : alu_res = data1 + data2
+        ALU_ADD: begin
             alu_res = data1 + data2;
         end
-        4'b0001: begin // set less than : alu_res = data1 < data2
-            alu_res = ($signed(data1) < $signed(data2)) ? 32'b1 : 32'b0;
+        ALU_SLT: begin
+            alu_res = { 31'b0, $signed(data1) < $signed(data2) };
         end
-        4'b0010: begin // set less than unsigned : alu_res = |data1| < |data2|
-            alu_res = (data1 < data2) ? 32'b1 : 32'b0;
+        ALU_SLTU: begin
+            alu_res = { 31'b0, data1 < data2 };
         end
-        4'b0011: begin // xor : alu_res = data1 ^ data2
+        ALU_XOR: begin
             alu_res = data1 ^ data2;
         end
-        4'b0100: begin // or : alu_res = data1 | data2
+        ALU_OR: begin
             alu_res = data1 | data2;
         end
-        4'b0101: begin // and : alu_res = data1 & data2
+        ALU_AND: begin
             alu_res = data1 & data2;
         end
-        4'b0110: begin // logical Left Shift : alu_res = data1 << data2
+        ALU_SLL: begin
             alu_res = data1 << data2[4:0];
         end
-        4'b0111: begin // logical right shift : alu_res = data1 >> data2
+        ALU_SRL: begin
             alu_res = data1 >> data2[4:0];
         end
-        4'b1000: begin // arithmetic right shift : alu_res = data1 >>> data2
+        ALU_SRA: begin
             alu_res = $signed(data1) >>> data2[4:0];
         end
-        4'b1001: begin // subtraction : alu_res = data1 - data2
+        ALU_SUB: begin
             alu_res = data1 - data2;
         end
-        4'b1010: begin // branch if eq : (data1 == data2) ? pc + imm : pc + 4
-            branch = (data1 == data2) ? 1'b1 : 1'b0;
+        ALU_BEQ: begin
+            branch = (data1 == data2) ? TAKE_BRANCH : IGNORE_BRANCH;
         end
-        4'b1011: begin // branch if not eq : (data1 != data2) ? pc + imm : pc + 4
-            branch = (data1 != data2) ? 1'b1 : 1'b0;
+        ALU_BNE: begin
+            branch = (data1 != data2) ? TAKE_BRANCH : IGNORE_BRANCH;
         end
-        4'b1100: begin // branch if less than : (data1 < data2) ? pc + imm : pc + 4
-            branch = ($signed(data1) < $signed(data2)) ? 1'b1 : 1'b0;
+        ALU_BLT: begin
+            branch = ($signed(data1) < $signed(data2)) ? TAKE_BRANCH : IGNORE_BRANCH;
         end
-        4'b1101: begin // branch if greater or eq : (data1 >= data2) ? pc + imm : pc + 4
-            branch = ($signed(data1) >= $signed(data2)) ? 1'b1 : 1'b0;
+        ALU_BGE: begin
+            branch = ($signed(data1) >= $signed(data2)) ? TAKE_BRANCH : IGNORE_BRANCH;
         end
-        4'b1110: begin // branch if less than unsigned : (|data1| < |data2|) ? pc + imm : pc + 4
-            branch = (data1 < data2) ? 1'b1 : 1'b0;
+        ALU_BLTU: begin
+            branch = (data1 < data2) ? TAKE_BRANCH : IGNORE_BRANCH;
         end
-        4'b1111: begin // branch if greater than or eq unsigned : (|data1| >= |data2|) ? pc + imm : pc + 4
-            branch = (data1 >= data2) ? 1'b1 : 1'b0;
+        ALU_BGEU: begin
+            branch = (data1 >= data2) ? TAKE_BRANCH : IGNORE_BRANCH;
         end
     endcase
 end
 
-endmodule
+endmodule // alu

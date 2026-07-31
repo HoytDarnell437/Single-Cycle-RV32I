@@ -1,3 +1,11 @@
+//------------------------------------------------------------------------------
+// register_file.sv  —  Register file for RV32 processor
+//
+// Author:   Hoyt Darnell
+// Created:  2026-07-30
+//
+// Timing: Combinational read and sequential write.
+//------------------------------------------------------------------------------
 module register_file #(
 localparam REGISTER_COUNT = 32
 )(
@@ -32,4 +40,4 @@ always_ff @(posedge clk) begin
     end
 end
 
-endmodule
+endmodule // register_file

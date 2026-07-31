@@ -1,4 +1,12 @@
-module pc (
+//------------------------------------------------------------------------------
+// pc.sv  —  Program counter for RV32 processor
+//
+// Author:   Hoyt Darnell
+// Created:  2026-07-30
+//
+// Timing: addr progresses on each rising clock edge.
+//------------------------------------------------------------------------------
+module pc import riscv_pkg::*; (
 input logic clk,
 input logic rst_n,
 input logic [1:0] pc_src,
@@ -18,12 +26,9 @@ always_comb begin
     pc_plus_imm = addr + imm;
     next_addr = 0;
     unique case (pc_src)
-            // normal increment
-            2'b00: next_addr = pc_plus_4;
-            // add immediate
-            2'b01: next_addr = pc_plus_imm;
-            // jump to alu_res
-            2'b10: next_addr = alu_res;
+        PCSRC_NEXT: next_addr = pc_plus_4;
+        PCSRC_BRANCH: next_addr = pc_plus_imm;
+        PCSRC_ALU: next_addr = alu_res;
     endcase
 end
 
@@ -36,4 +41,4 @@ always_ff @(posedge clk) begin
     end
 end
 
-endmodule
+endmodule // pc

@@ -1,4 +1,12 @@
-module decoder (
+//------------------------------------------------------------------------------
+// decoder.sv  —  Decoder for RV32 processor
+//
+// Author:   Hoyt Darnell
+// Created:  2026-07-30
+//
+// Timing: Purely combinational
+//------------------------------------------------------------------------------
+module decoder import riscv_pkg::*; (
 input logic [31:0] instr,
 input logic branch,
 output logic [4:0] rs1,
@@ -7,35 +15,35 @@ output logic [4:0] rd,
 output logic [3:0] alu_ctrl,
 output logic alu_src_a,
 output logic alu_src_b,
-output logic i_shift,
 output logic reg_write,
 output logic [1:0] wr_src,
 output logic [2:0] imm_sel,
 output logic mem_rw,
 output logic [1:0] pc_src,
-output logic [1:0] addr_precision,
+output logic [1:0] mem_size,
 output logic sign
 );
-// signal declaration
+
+// -- signal declaration --
 logic [6:0] opcode;
 logic [2:0] funct3;
 logic [6:0] funct7;
-// combinational logic
+
+// -- combinational logic --
 always_comb begin
     // default values
     rs1 = instr[19:15];
     rs2 = instr[24:20];
     rd = instr[11:7];
-    alu_ctrl = 4'b0000;
-    alu_src_a = 1'b1;
-    alu_src_b = 1'b1;
-    i_shift = 1'b0;
+    alu_ctrl = ALU_ADD;
+    alu_src_a = ALUSRC1_RS;
+    alu_src_b = ALUSRC2_IMM;
     reg_write = 1'b1;
-    wr_src = 2'b00;
-    imm_sel = 3'b000;
+    wr_src = WRSRC_ALU;
+    imm_sel = IMM_I_TYPE;
     mem_rw = 1'b0;
-    pc_src = 2'b00;
-    addr_precision = 2'b00;
+    pc_src = PCSRC_NEXT;
+    mem_size = SIZE_B;
     sign = 1'b1;
     
     // Operation Specifiers
@@ -44,230 +52,186 @@ always_comb begin
     funct7 = instr[31:25];
     
     unique case (opcode)
-    // I-Type Instructions
         // ADDI SLTI SLTIU XORI ORI ANDI SLLI SRLI SRAI
-        7'b0010011: begin
-            imm_sel = 3'b000;
-            case (funct3)
-                // ADDI
-                3'b000: begin
+        OP_I_TYPE: begin
+            imm_sel = IMM_I_TYPE;
+            unique case (funct3)
+                F3_ADD_SUB: begin
+                    // Default values sufficient
                 end
-                // SLTI
-                3'b010: begin
-                    alu_ctrl = 4'b0001;
+                F3_SLT: begin
+                    alu_ctrl = ALU_SLT;
                 end
-                // SLTIU
-                3'b011: begin
-                    alu_ctrl = 4'b0010;
+                F3_SLTU: begin
+                    alu_ctrl = ALU_SLTU;
                 end
-                // XORI
-                3'b100: begin
-                    alu_ctrl = 4'b0011;
+                F3_XOR: begin
+                    alu_ctrl = ALU_XOR;
                 end
-                // ORI
-                3'b110: begin
-                    alu_ctrl = 4'b0100;
+                F3_OR: begin
+                    alu_ctrl = ALU_OR;
                 end
-                // ANDI
-                3'b111: begin
-                    alu_ctrl = 4'b0101;
+                F3_AND: begin
+                    alu_ctrl = ALU_AND;
                 end
-                // SLLI
-                3'b001: begin
-                    alu_ctrl = 4'b0110;
-                    imm_sel = 3'b101;
-                    i_shift = 1'b1;
+                F3_SL: begin
+                    alu_ctrl = ALU_SLL;
+                    imm_sel = IMM_SHIFT;
                 end
-                // SRLI SRAI
-                3'b101: begin
-                    imm_sel = 3'b101;
-                    i_shift = 1'b1;
-                    // SRLI
-                    if (!instr[30]) begin
-                        alu_ctrl = 4'b0111;
+                F3_SR: begin
+                    imm_sel = IMM_SHIFT;
+                    if (funct7 == F7_LOGICAL) begin
+                        alu_ctrl = ALU_SRL;
                     end 
-                    // SRAI
                     else begin
-                        alu_ctrl = 4'b1000;
+                        alu_ctrl = ALU_SRA;
                     end
                 end
             endcase
         end
-        // JALR
-        7'b1100111: begin
-            imm_sel = 3'b000;
-            pc_src = 2'b10;
-            wr_src = 2'b10;
+        OP_JALR: begin
+            imm_sel = IMM_I_TYPE;
+            pc_src = PCSRC_ALU;
+            wr_src = WRSRC_PC;
         end
-        // FENCE
-        7'b0001111: begin
-            imm_sel = 3'b000;
+        OP_FENCE: begin
+            imm_sel = IMM_I_TYPE;
             reg_write = 1'b0;
         end
-        // ECALL EBREAK
-        7'b1110011: begin
-            imm_sel = 3'b000;
+        OP_ENVIRONMENT: begin
+            imm_sel = IMM_I_TYPE;
             reg_write = 1'b0;
             // ECALL
             if (!instr[20]) begin
+                // Default values sufficient
             end
             // EBREAK
             else begin
+                // Default values sufficient
             end
         end
         // LB LH LW LBU LHU
-        7'b0000011: begin
-            imm_sel = 3'b000;
-            wr_src = 2'b01;
+        OP_LOAD: begin
+            imm_sel = IMM_I_TYPE;
+            wr_src = WRSRC_READ;
             case (funct3)
-                // LB
-                3'b000: begin
+                F3_LB: begin
+                    // Default values sufficient
                 end
-                // LH
-                3'b001: begin
-                    addr_precision = 2'b01;
+                F3_LH: begin
+                    mem_size = SIZE_H;
                 end
-                // LW
-                3'b010: begin
-                    addr_precision = 2'b10;
+                F3_LW: begin
+                    mem_size = SIZE_W;
                 end
-                // LBU
-                3'b100: begin
+                F3_LBU: begin
                     sign = 1'b0;
                 end
-                // LHU
-                3'b101: begin
-                    addr_precision = 2'b01;
+                F3_LHU: begin
+                    mem_size = SIZE_H;
                     sign = 1'b0;
                 end
             endcase
         end
-    // R-Type Instructions
         // ADD SUB SLL SLT SLTU XOR SRL SRA OR AND
-        7'b0110011: begin
-            alu_src_b = 1'b0;
-            case (funct3)
-                // ADD SUB
-                3'b000: begin
-                    // ADD
-                    if (!instr[30]) begin
+        OP_R_TYPE: begin
+            alu_src_b = ALUSRC2_RS;
+            unique case (funct3)
+                F3_ADD_SUB: begin
+                    if (funct7 == F7_ADD) begin
+                        // Default values sufficient
                     end
-                    // SUB
                     else begin
-                        alu_ctrl = 4'b1001;
+                        alu_ctrl = ALU_SUB;
                     end
                 end
-                // SLL
-                3'b001: begin
-                    alu_ctrl = 4'b0110;
+                F3_SL: begin
+                    alu_ctrl = ALU_SLL;
                 end
-                // SLT
-                3'b010: begin
-                    alu_ctrl = 4'b0001;
+                F3_SLT: begin
+                    alu_ctrl = ALU_SLT;
                 end
-                // SLTU
-                3'b011: begin
-                    alu_ctrl = 4'b0010;
+                F3_SLTU: begin
+                    alu_ctrl = ALU_SLTU;
                 end
-                // XOR
-                3'b100: begin
-                    alu_ctrl = 4'b0011;
+                F3_XOR: begin
+                    alu_ctrl = ALU_XOR;
                 end
-                // SRL SRA
-                3'b101: begin
-                    // SRL
-                    if (!instr[30]) begin
-                        alu_ctrl = 4'b0111;
+                F3_SR: begin
+                    if (funct7 == F7_LOGICAL) begin
+                        alu_ctrl = ALU_SRL;
                     end
-                    // SRA
                     else begin
-                        alu_ctrl = 4'b1000;
+                        alu_ctrl = ALU_SRA;
                     end
                 end
-                // OR
-                3'b110: begin
-                     alu_ctrl = 4'b0100;
+                F3_OR: begin
+                     alu_ctrl = ALU_OR;
                 end
-                // AND
-                3'b111: begin
-                    alu_ctrl = 4'b0101;
+                F3_AND: begin
+                    alu_ctrl = ALU_AND;
                 end
             endcase
         end
-    // B-Type Instructions    
         // BEQ BNE BLT BGE BLTU BGEU
-        7'b1100011: begin
-            alu_src_b = 1'b0;
-            imm_sel = 3'b010;
+        OP_B_TYPE: begin
+            alu_src_b = ALUSRC2_RS;
+            imm_sel = IMM_B_TYPE;
             reg_write = 1'b0;
-            pc_src = 2'b00;
+            pc_src = PCSRC_NEXT;
             case (funct3)
-                // BEQ
-                3'b000: begin
-                    alu_ctrl = 4'b1010;
+                F3_BEQ: begin
+                    alu_ctrl = ALU_BEQ;
                 end
-                // BNE
-                3'b001: begin
-                    alu_ctrl = 4'b1011;
+                F3_BNE: begin
+                    alu_ctrl = ALU_BNE;
                 end
-                // BLT
-                3'b100: begin
-                    alu_ctrl = 4'b1100;
+                F3_BLT: begin
+                    alu_ctrl = ALU_BLT;
                 end
-                // BGE
-                3'b101: begin
-                    alu_ctrl = 4'b1101;
+                F3_BGE: begin
+                    alu_ctrl = ALU_BGE;
                 end
-                // BLTU
-                3'b110: begin
-                    alu_ctrl = 4'b1110;
+                F3_BLTU: begin
+                    alu_ctrl = ALU_BLTU;
                 end
-                // BGEU
-                3'b111: begin
-                    alu_ctrl = 4'b1111;
+                F3_BGEU: begin
+                    alu_ctrl = ALU_BGEU;
                 end
             endcase
         end
-    // S-Type Instructions
         // SB SH SW
-        7'b0100011: begin
-            imm_sel = 3'b001;
+        OP_STORE: begin
+            imm_sel = IMM_S_TYPE;
             reg_write = 1'b0;
             mem_rw = 1'b1;
             case (funct3)
-                // SB
-                3'b000: begin
+                F3_SB: begin
+                    // Default values sufficient
                 end
-                // SH
-                3'b001: begin
-                    addr_precision = 2'b01;
+                F3_SH: begin
+                    mem_size = SIZE_H;
                 end
-                // SW
-                3'b010: begin
-                    addr_precision = 2'b10;
+                F3_SW: begin
+                    mem_size = SIZE_W;
                 end
             endcase
         end
-    // U-Type Instructions
-        // LUI
-        7'b0110111: begin
-            imm_sel = 3'b011;
+        OP_LUI: begin
+            imm_sel = IMM_U_TYPE;
             rs1 = 5'b00000;
         end 
-        // AUIPC
-        7'b0010111: begin
-            imm_sel = 3'b011;
-            alu_src_a = 1'b0;
+        OP_AUIPC: begin
+            imm_sel = IMM_U_TYPE;
+            alu_src_a = ALUSRC1_PC;
         end
-    // J-Type Instructions
-        // JAL
-        7'b1101111: begin
-            imm_sel = 3'b100;
-            alu_src_a = 1'b0;
-            pc_src = 2'b01;
-            wr_src = 2'b10;
+        OP_JAL: begin
+            imm_sel = IMM_J_TYPE;
+            alu_src_a = ALUSRC1_PC;
+            pc_src = PCSRC_BRANCH;
+            wr_src = WRSRC_PC;
         end
     endcase
 end
 
-endmodule
+endmodule // decoder

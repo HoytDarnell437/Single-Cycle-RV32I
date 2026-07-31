@@ -1,4 +1,12 @@
-module data_memory #(
+//------------------------------------------------------------------------------
+// data_memory.sv  —  Data memory for RV32 processor
+//
+// Author:   Hoyt Darnell
+// Created:  2026-07-30
+//
+// Timing: Read is combinational and write is synchonous
+//------------------------------------------------------------------------------
+module data_memory import riscv_pkg::*; #(
 localparam MEM_SIZE = 128
 )(
 input logic clk,
@@ -26,52 +34,37 @@ always_comb begin
     if (!wr_nrd) begin // read
         out_word = ram[addr[31:2]];
         unique case (size) 
-            // byte
-            2'b00: begin
-                if (sign) begin // signed
+            SIZE_B: begin
+                if (sign) begin
                     unique case (addr[1:0])
-                        // first byte
-                        2'b00: data_out = { {24{out_word[7]}} , out_word[7:0] };
-                        // second byte
-                        2'b01: data_out = { {24{out_word[15]}} , out_word[15:8] };
-                        // third byte
-                        2'b10: data_out = { {24{out_word[23]}} , out_word[23:16] };
-                        // fourth byte
-                        2'b11: data_out = { {24{out_word[31]}} , out_word[31:24] };
+                        FIRST_BYTE: data_out = { {24{out_word[7]}} , out_word[7:0] };
+                        SECOND_BYTE: data_out = { {24{out_word[15]}} , out_word[15:8] };
+                        THIRD_BYTE: data_out = { {24{out_word[23]}} , out_word[23:16] };
+                        FOURTH_BYTE: data_out = { {24{out_word[31]}} , out_word[31:24] };
                     endcase
-                end else begin // unsigned
+                end else begin
                     unique case (addr[1:0])
-                        // first byte
-                        2'b00: data_out = { 24'b0 , out_word[7:0] };
-                        // second byte
-                        2'b01: data_out = { 24'b0 , out_word[15:8] };
-                        // third byte
-                        2'b10: data_out = { 24'b0 , out_word[23:16] };
-                        // fourth byte
-                        2'b11: data_out = { 24'b0 , out_word[31:24] };
+                        FIRST_BYTE: data_out = { 24'b0 , out_word[7:0] };
+                        SECOND_BYTE: data_out = { 24'b0 , out_word[15:8] };
+                        THIRD_BYTE: data_out = { 24'b0 , out_word[23:16] };
+                        FOURTH_BYTE: data_out = { 24'b0 , out_word[31:24] };
                     endcase
                 end
             end
-            // half
-            2'b01: begin
+            SIZE_H: begin
                 if (sign) begin
                     unique case (addr[1])
-                        // lower half
-                        1'b0: data_out = { {16{out_word[15]}} , out_word[15:0] };
-                        // upper half
-                        1'b1: data_out = { {16{out_word[31]}} , out_word[31:16] };
+                        FIRST_HALF: data_out = { {16{out_word[15]}} , out_word[15:0] };
+                        SECOND_HALF: data_out = { {16{out_word[31]}} , out_word[31:16] };
                     endcase
                 end else begin
                     unique case (addr[1])
-                        // lower half
-                        1'b0: data_out = { 16'b0 , out_word[15:0] };
-                        // upper half
-                        1'b1: data_out = { 16'b0 , out_word[31:16] };
+                        FIRST_HALF: data_out = { 16'b0 , out_word[15:0] };
+                        SECOND_HALF: data_out = { 16'b0 , out_word[31:16] };
                     endcase
                 end
             end
-            // whole
-            2'b10: begin
+            SIZE_W: begin
                 data_out = out_word;
             end
         endcase
@@ -82,34 +75,25 @@ end
 always_ff @(posedge clk) begin
     if (wr_nrd) begin // write
         unique case (size) 
-            // byte
-            2'b00: begin 
+            SIZE_B: begin 
                 unique case (addr[1:0])
-                    // first byte
-                    2'b00: ram[addr[31:2]][7:0] <= data_in[7:0];
-                    // second byte
-                    2'b01: ram[addr[31:2]][15:8] <= data_in[7:0];
-                    // third byte
-                    2'b10: ram[addr[31:2]][23:16] <= data_in[7:0];
-                    // fourth byte
-                    2'b11: ram[addr[31:2]][31:24] <= data_in[7:0];
+                    FIRST_BYTE: ram[addr[31:2]][7:0] <= data_in[7:0];
+                    SECOND_BYTE: ram[addr[31:2]][15:8] <= data_in[7:0];
+                    THIRD_BYTE: ram[addr[31:2]][23:16] <= data_in[7:0];
+                    FOURTH_BYTE: ram[addr[31:2]][31:24] <= data_in[7:0];
                 endcase
             end
-            // half
-            2'b01: begin
+            SIZE_H: begin
                 unique case (addr[1])
-                    // lower half
-                    1'b0: ram[addr[31:2]][15:0] <= data_in[15:0];
-                    // upper half
-                    1'b1: ram[addr[31:2]][31:16] <= data_in[15:0];
+                    FIRST_HALF: ram[addr[31:2]][15:0] <= data_in[15:0];
+                    SECOND_HALF: ram[addr[31:2]][31:16] <= data_in[15:0];
                 endcase
             end
-            // whole
-            2'b10: begin
+            SIZE_W: begin
                 ram[addr[31:2]] <= data_in;
             end
         endcase
     end
 end
 
-endmodule
+endmodule // data_memory

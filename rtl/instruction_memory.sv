@@ -1,3 +1,11 @@
+//------------------------------------------------------------------------------
+// instruction_memory.sv  —  Instruction memory for RV32 processor
+//
+// Author:   Hoyt Darnell
+// Created:  2026-07-30
+//
+// Timing: Purely combinational
+//------------------------------------------------------------------------------
 module instruction_memory #(
 localparam INSTRUCTION_COUNT = 1024
 )(
@@ -16,4 +24,4 @@ initial begin
     $readmemh("instructions.hex", rom);
 end
 
-endmodule
+endmodule // instruction_memory

@@ -1,3 +1,13 @@
+//------------------------------------------------------------------------------
+// processor_tb.sv  —  Testbench for RV32 processor
+//
+// Author:   Hoyt Darnell
+// Created:  2026-07-30
+//
+// Clocking: Generates a system clock at 100 MHz
+//
+// Reset: Asserts rst for first 50 ns of testbench
+//------------------------------------------------------------------------------
 `timescale 1ns/1ps 
 
 module processor_tb;
