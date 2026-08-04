@@ -6,40 +6,62 @@
 //
 // Description:
 //   Single cycle RV32I processor. Instantiates: PC, instruction memory,
-//   register file, decoder, immediate generator, ALU, data memory, clock
+//   register file, decoder, immediate generator, ALU, clock
 //   wizard, and synchronous reset generator.
 //
 // Clocking: 100 MHz board clock (clk_100) => MMCM (clk_core) => 75 MHz system clock (clk_sys).
 //
 // Reset: Reset is active-high at the pin, inverted internally, and synchronously deasserted in sync_reset.
 //
-// Target: Digilent Arty A7-100T (XC7A100T)
 //------------------------------------------------------------------------------
 `timescale 1ns / 1ps
 
 module processor import riscv_pkg::*; (
-input logic clk_100,
-input logic rst,
-output logic locked,
-output logic out_check // arbitrary output to stop vivado from "optimizing" away the design
+input logic clk,
+input logic rst_n,
+input logic [31:0] read_data,
+output logic write_nread,
+output logic [1:0] mem_size,
+output logic sign,
+output logic [31:0] write_data,
+output logic [31:0] address
 );
 
 // -- signal declaration --
-logic invert_rst;
 logic [31:0] data1_in;
 logic [31:0] data2_in;
 logic [31:0] wr_data;
 logic [1:0] pc_src;
 
+logic [31:0] addr;
+logic [31:0] pc_plus_4;
+logic [31:0] instr;
+
+logic [31:0] data1;
+logic [31:0] data2;
+logic [4:0] rs1;
+logic [4:0] rs2;
+logic [4:0] rd;
+
+logic [3:0] alu_ctrl;
+logic alu_src_a;
+logic alu_src_b;
+logic reg_write;
+logic [1:0] wr_src;
+logic [2:0] imm_sel;
+logic [1:0] pc_src_sel;
+
+logic [31:0] alu_res;
+logic branch;
+logic [31:0] imm;
+
 
 // -- combinational logic --
 always_comb begin
-    // unrefined rst invert
-    invert_rst = ~rst;
+    // port aliases
+    write_data = data2;
+    address = alu_res;
 
-    // out check
-    out_check = alu_res[0];
-    
     // muxes 
     unique case (branch)
         IGNORE_BRANCH: pc_src = pc_src_sel;
@@ -65,32 +87,8 @@ end
 
 // -- module instances -- 
 
-// clock_core
-logic clk_sys;
-
-clk_core clock_core (
-    .clk(clk_sys),
-    .resetn(invert_rst),
-    .locked(locked),
-    .clk_in1(clk_100)
-);
-
-// synchronous reset generator
-logic rst_n;
-
-sync_reset sync_reset_inst (
-    .clk(clk_sys),
-    .invert_rst(invert_rst),
-    .locked(locked),
-    .rst_n(rst_n)
-);
-
-// program counter
-logic [31:0] addr;
-logic [31:0] pc_plus_4;
-
 pc pc_inst (
-    .clk(clk_sys),
+    .clk(clk),
     .rst_n(rst_n),
     .pc_src(pc_src),
     .imm(imm),
@@ -99,34 +97,13 @@ pc pc_inst (
     .pc_plus_4(pc_plus_4)
 );
 
-// instruction memory
-logic [31:0] instr;
-
 instruction_memory instruction_memory_inst (
     .addr(addr),
     .instr(instr)
 );
 
-
-// data memory
-logic [31:0] read_data;
-
-data_memory data_memory_inst (
-    .clk(clk_sys),
-    .wr_nrd(mem_rw),
-    .size(mem_size),
-    .sign(sign),
-    .data_in(data2),
-    .addr(alu_res),
-    .data_out(read_data)
-);
-
-// register file 
-logic [31:0] data1;
-logic [31:0] data2;
-
 register_file register_file_inst (
-    .clk(clk_sys),
+    .clk(clk),
     .rst_n(rst_n),
     .rs1(rs1),
     .rs2(rs2),
@@ -136,21 +113,6 @@ register_file register_file_inst (
     .data1(data1),
     .data2(data2)
 );
-
-// decoder
-logic [4:0] rs1;
-logic [4:0] rs2;
-logic [4:0] rd;
-logic [3:0] alu_ctrl;
-logic alu_src_a;
-logic alu_src_b;
-logic reg_write;
-logic [1:0] wr_src;
-logic [2:0] imm_sel;
-logic mem_rw;
-logic [1:0] pc_src_sel;
-logic [1:0] mem_size;
-logic sign;
 
 decoder decoder_inst (
     .instr(instr),
@@ -164,15 +126,11 @@ decoder decoder_inst (
     .reg_write(reg_write),
     .wr_src(wr_src),
     .imm_sel(imm_sel),
-    .mem_rw(mem_rw),
+    .mem_rw(write_nread),
     .pc_src(pc_src_sel),
     .mem_size(mem_size),
     .sign(sign)
 );
-
-// alu
-logic [31:0] alu_res;
-logic branch;
 
 alu alu_inst (
     .alu_ctrl(alu_ctrl),
@@ -181,9 +139,6 @@ alu alu_inst (
     .alu_res(alu_res),
     .branch(branch)
 );
-
-// immediate generator
-logic [31:0] imm;
 
 imm_gen imm_gen_inst (
     .instr(instr),

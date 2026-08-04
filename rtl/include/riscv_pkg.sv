@@ -43,7 +43,7 @@ package riscv_pkg;
     localparam F3_SB = 3'b000;
     localparam F3_SH = 3'b001;
     localparam F3_SW = 3'b010;
-    
+
     // Arithmetic Funct3
     localparam F3_ADD_SUB = 3'b000;
     localparam F3_SLT     = 3'b010;
@@ -115,7 +115,7 @@ package riscv_pkg;
     localparam ALUSRC2_RS  = 1'b0;
     localparam ALUSRC2_IMM = 1'b1;
 
-    // BYTE SELECT
+    // BYTE ADDRESS
     localparam FIRST_BYTE  = 2'b00;
     localparam SECOND_BYTE = 2'b01;
     localparam THIRD_BYTE  = 2'b10;
@@ -124,5 +124,24 @@ package riscv_pkg;
     // HALF SELECT
     localparam FIRST_HALF  = 1'b0;
     localparam SECOND_HALF = 1'b1;
+
+    // BYTE ENABLE
+    localparam EN_FIRST_BYTE = 4'b0001;
+    localparam EN_SECOND_BYTE = 4'b0010;
+    localparam EN_THIRD_BYTE = 4'b0100;
+    localparam EN_FOURTH_BYTE = 4'b1000;
+    localparam EN_FIRST_HALF = 4'b0011;
+    localparam EN_SECOND_HALF = 4'b1100;
+    localparam EN_WORD = 4'b1111;
+
+    // PERIPHERAL SELECT
+    localparam ACCESS_DATA_MEMORY = 2'b00;
+    localparam ACCESS_SWITCHES    = 2'b01;
+    localparam ACCESS_BUTTONS     = 2'b10;
+    localparam ACCESS_LEDS        = 2'b11;
+
+    localparam SEL_SWITCHES = 2'b00;
+    localparam SEL_BUTTONS  = 2'b01;
+    localparam SEL_LEDS     = 2'b10;
 
 endpackage // riscv_pkg
