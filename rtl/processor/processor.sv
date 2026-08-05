@@ -19,12 +19,11 @@
 module processor import riscv_pkg::*; (
 input logic clk,
 input logic rst_n,
-input logic [31:0] read_data,
+input logic [31:0] read_data_in,
 output logic write_nread,
-output logic [1:0] mem_size,
-output logic sign,
-output logic [31:0] write_data,
-output logic [31:0] address
+output logic [3:0] byte_en,
+output logic [31:0] write_data_out,
+output logic [29:0] address
 );
 
 // -- signal declaration --
@@ -50,17 +49,21 @@ logic reg_write;
 logic [1:0] wr_src;
 logic [2:0] imm_sel;
 logic [1:0] pc_src_sel;
+logic [1:0] mem_size;
+logic sign;
 
 logic [31:0] alu_res;
 logic branch;
 logic [31:0] imm;
 
+logic [31:0] read_data;
+logic [31:0] write_data;
 
 // -- combinational logic --
 always_comb begin
     // port aliases
     write_data = data2;
-    address = alu_res;
+    address = alu_res[31:2];
 
     // muxes 
     unique case (branch)
@@ -138,6 +141,17 @@ alu alu_inst (
     .data2(data2_in),
     .alu_res(alu_res),
     .branch(branch)
+);
+
+lsu lsu_inst (
+    .byte_addr(alu_res[1:0]),
+    .mem_size(mem_size),
+    .sign(sign),
+    .read_data_in(read_data_in),
+    .read_data_out(read_data),
+    .write_data_in(write_data),
+    .write_data_out(write_data_out),
+    .byte_en(byte_en)
 );
 
 imm_gen imm_gen_inst (

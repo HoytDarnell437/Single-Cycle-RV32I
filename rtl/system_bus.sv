@@ -35,10 +35,9 @@ logic mem_write_nread;
 logic [1:0] peripheral_sel;
 
 logic write_nread;
-logic [1:0] mem_size;
-logic sign;
+logic [3:0] byte_en;
 logic [31:0] write_data;
-logic [31:0] address;
+logic [29:0] address;
 
 logic [3:0] led_reg;
 
@@ -94,12 +93,11 @@ sync_reset sync_reset_inst (
 
 data_memory data_memory_inst (
     .clk(clk_sys),
-    .wr_nrd(mem_write_nread),
-    .size(mem_size),
-    .sign(sign),
-    .data_in(write_data),
+    .wr(mem_write_nread),
+    .byte_en(byte_en),
+    .write_data(write_data),
     .addr(address),
-    .data_out(mem_read_data)
+    .read_data(mem_read_data)
 );
 
 address_decoder address_decoder_inst (
@@ -110,11 +108,10 @@ address_decoder address_decoder_inst (
 processor processor_inst (
     .clk(clk_sys),
     .rst_n(rst_n),
-    .read_data(read_data),
+    .read_data_in(read_data),
     .write_nread(write_nread),
-    .mem_size(mem_size),
-    .sign(sign),
-    .write_data(write_data),
+    .byte_en(byte_en),
+    .write_data_out(write_data),
     .address(address)
 );
 
